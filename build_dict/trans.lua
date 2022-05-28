@@ -61,12 +61,9 @@ local function print_dict()
     end
   end
   print(
-[[#include "stdint.h"
-#include "lauxlib.h"
+[[#include "lauxlib.h"
 #include "lua.h"
 #include "lualib.h"
-#include "string.h"
-#include "math.h"
 typedef struct word {
     uint32_t next;
     uint8_t is_list;

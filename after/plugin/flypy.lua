@@ -1,1 +1,1 @@
-require('cmp').register_source('flypy', require("flypy"))
+require('cmp').register_source('flypy', require("flypy").new())

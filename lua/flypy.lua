@@ -1,16 +1,41 @@
 local source = {}
 
+local defaults = {
+  comment = true, -- 在所有文件类型的注释下开启
+  filetype = { "markdown", },  -- 在指定文件类型下开启
+  num_filter = true, -- 数字筛选
+  source_code = true,
+}
+
+local config = {}
+
 source.new = function()
   local self = setmetatable({}, { __index = source })
   self.libflypy = require("libflypy")
+  self.config = config
   return self
+end
+
+function source.setup(opts)
+  if not opts then
+    return
+  end
+  local new_config = vim.tbl_deep_extend('keep', opts, defaults)
+  setmetatable(config, {__index = new_config})
 end
 
 -- @return boolean
 function source:is_available()
-  local context = require 'cmp.config.context'
-  return context.in_treesitter_capture("comment")
-  or context.in_syntax_group("Comment")
+  if self.config.filetype and vim.tbl_contains(self.config.filetype, vim.api.nvim_buf_get_option(0, "filetype")) then
+    return true
+  end
+
+  if self.config.comment then
+    local context = require 'cmp.config.context'
+    return context.in_treesitter_capture("comment")
+    or context.in_syntax_group("Comment")
+  end
+  return false
 end
 
 -- @return string
@@ -20,7 +45,7 @@ end
 
 -- @return string
 function source:get_keyword_pattern()
-  return [[\<\l\{1,4\}\>]]
+  return [[\<\l\+\d\?]]
 end
 
 -- Return trigger characters for triggering completion. (Optional)
@@ -30,18 +55,37 @@ end
 
 function source:complete(params, callback)
   local input = string.sub(params.context.cursor_before_line, params.offset)
-  local query_result = { self.libflypy.get_word_by_code(input) }
+  local query_result = { self.libflypy.query(input) }
   local reply_items = {}
+  vim.pretty_print(self.config)
 
-  for _, query_item in pairs(query_result) do
+  for i, query_item in pairs(query_result) do
+    local uncode = string.sub(input, 1, #input - #query_item.code)
     table.insert(reply_items, {
-      label = query_item.word,
-      word = query_item.word,
-      filterText = input,
-      preselect = true,
+      label = (function ()
+        local label = query_item.word
+        if self.config.source_code then
+          label = string.format("%s(%s)", label, query_item.code)
+        end
+        if self.config.num_filter then
+          label = string.format("%s(%d)", label, i)
+        end
+        return label
+      end)(),
+      word = string.format("%s%s", uncode, query_item.word),
+      filterText = (function ()
+        if self.config.num_filter then
+          return string.format("%s%d", input, i)
+        else
+          return input
+        end
+      end)(),
+      sortText = i,
+      preselect = #uncode == 0,
+      -- commitCharacters = {i},
     })
   end
   callback(reply_items)
 end
 
-return source.new()
+return source
