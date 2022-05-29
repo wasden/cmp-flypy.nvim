@@ -1,11 +1,27 @@
-CFLAGS = -shared -fPIC -llua
-CC = gcc
-TARGET := libflypy.so
+# 生成文件: dict.h lib$(TARGET).c lib$(TARGET).so 
+# $(TARGET)依赖: $(TARGET).dict 
+TARGET = flypy wubi98
+DEPENDENCY_TARGET = $(TARGET:%=%_dependency)
+LIB_TARGET = $(TARGET:%=$(TARGET_DIR)/lib%.so)
+CFLAGS = -shared -fPIC -llua -I$(BUILD_DIR) -I$(SOURCE_DIR)
+SOURCE_DIR = src
+BUILD_DIR = build
+TARGET_DIR = lua
+DICT_DIR = dict
 
-all: build/$(TARGET)
+all: $(TARGET)
+$(TARGET): %:%_dependency $(TARGET_DIR)/lib%.so
+	@echo "build $@ success!"
+$(LIB_TARGET): $(TARGET_DIR)/%.so:$(BUILD_DIR)/%.c $(SOURCE_DIR)/dict.c 
+	$(CC) $(CFLAGS) $^ -o $@
 
-build/$(TARGET): build_dict/libflypy.c 
-	cd build_dict && lua trans.lua > mydict.h && $(CC) $(CFLAGS) libflypy.c -o ../lua/$(TARGET)
+$(DEPENDENCY_TARGET): %_dependency:$(BUILD_DIR) $(DICT_DIR)/%.dict
+	cd $(BUILD_DIR) ; lua ../$(SOURCE_DIR)/gen_c_header.lua ../$(DICT_DIR)/$(@:%_dependency=%.dict)
+	cd $(BUILD_DIR) ; lua ../$(SOURCE_DIR)/gen_c_entry.lua $(@:%_dependency=lib%)
 
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
+.PHOPY: clean
 clean:
-	rm -f lua/$(TARGET) build_dict/mydict.h
+	-rm -rf $(BUILD_DIR) $(TARGET_DIR)/*.so

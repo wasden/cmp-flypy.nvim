@@ -1,6 +1,7 @@
 local source = {}
 
 local defaults = {
+  dict_name = "flypy",
   comment = true, -- 在所有文件类型的注释下开启
   filetype = { "markdown", },  -- 在指定文件类型下开启
   num_filter = true, -- 数字筛选
@@ -11,7 +12,6 @@ local config = {}
 
 source.new = function()
   local self = setmetatable({}, { __index = source })
-  self.libflypy = require("libflypy")
   self.config = config
   return self
 end
@@ -26,6 +26,10 @@ end
 
 -- @return boolean
 function source:is_available()
+  if not self.dict then
+    self.dict = require("lib" .. self.config.dict_name)
+  end
+
   if self.config.filetype and vim.tbl_contains(self.config.filetype, vim.api.nvim_buf_get_option(0, "filetype")) then
     return true
   end
@@ -55,7 +59,7 @@ end
 
 function source:complete(params, callback)
   local input = string.sub(params.context.cursor_before_line, params.offset)
-  local query_result = { self.libflypy.query(input) }
+  local query_result = { self.dict.query(input) }
   local reply_items = {}
   vim.pretty_print(self.config)
 
