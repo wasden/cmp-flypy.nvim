@@ -20,7 +20,7 @@ use {
   'wasden/cmp-flypy.nvim',
   run = "make",                    -- make flypy只编译小鹤音形， make wubi98只编译98五笔， make或make all全编译
   after = "nvim-cmp",
-  config = function()              -- 调用require("flypy").setup()以使用默认配置
+  config = function()              -- 配置config以修改默认配置
     require("flypy").setup({
       dict_name = "flypy",         -- 选择码表：flypy为小鹤音形，wubi98为98五笔
       comment = true,              -- 在所有文件类型的注释下开启

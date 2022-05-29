@@ -13,6 +13,7 @@ local config = {}
 source.new = function()
   local self = setmetatable({}, { __index = source })
   self.config = config
+  setmetatable(config, {__index = defaults})
   return self
 end
 
