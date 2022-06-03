@@ -1,4 +1,5 @@
 local source = {}
+local dirname = string.sub(debug.getinfo(1).source, 2, #"/flypy.lua" * -1)
 
 local defaults = {
   dict_name = "flypy",
@@ -27,8 +28,8 @@ end
 
 -- @return boolean
 function source:is_available()
-  if not self.dict then
-    self.dict = require("lib" .. self.config.dict_name)
+  if not self.query then
+    self.query = package.loadlib(dirname .. "../build/lib" .. self.config.dict_name .. ".so", "query")
   end
 
   if self.config.filetype and vim.tbl_contains(self.config.filetype, vim.api.nvim_buf_get_option(0, "filetype")) then
@@ -60,7 +61,7 @@ end
 
 function source:complete(params, callback)
   local input = string.sub(params.context.cursor_before_line, params.offset)
-  local query_result = { self.dict.query(input) }
+  local query_result = { self.query(input) }
   local reply_items = {}
   vim.pretty_print(self.config)
 
