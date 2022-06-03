@@ -1,5 +1,4 @@
 local source = {}
-local dirname = string.sub(debug.getinfo(1).source, 2, #"/flypy.lua" * -1)
 
 local defaults = {
   dict_name = "flypy",
@@ -10,6 +9,14 @@ local defaults = {
 }
 
 local config = {}
+
+local gen_lib_query = (function ()
+  local this_dir = string.sub(debug.getinfo(1).source, 2, #"/flypy.lua" * -1)
+  return function (dict_name)
+    local lib_dir = string.format("%s../build/lib%s.so", this_dir, dict_name)
+    return package.loadlib(lib_dir, "query")
+  end
+end)()
 
 source.new = function()
   local self = setmetatable({}, { __index = source })
@@ -29,7 +36,7 @@ end
 -- @return boolean
 function source:is_available()
   if not self.query then
-    self.query = package.loadlib(dirname .. "../build/lib" .. self.config.dict_name .. ".so", "query")
+    self.query = gen_lib_query(self.config.dict_name)
   end
 
   if self.config.filetype and vim.tbl_contains(self.config.filetype, vim.api.nvim_buf_get_option(0, "filetype")) then
