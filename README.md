@@ -41,15 +41,13 @@ require('cmp').setup({
 ["<Space>"] = cmp.mapping(function(fallback)
   if cmp.visible() then
     local selected_entry = cmp.core.view:get_selected_entry()
-    if not selected_entry then
-      return fallback()
+    if selected_entry
+       and selected_entry.source.name == "flypy"
+       and not cmp.confirm({select=true}) then
+       return fallback()
     end
-    if selected_entry.source.name == "flypy" and not cmp.confirm({select=true}) then
-      return fallback()
-    end
-  else
-    fallback()
   end
+  fallback()
 end,
 {"i","s",}),
 
