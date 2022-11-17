@@ -70,7 +70,6 @@ function source:complete(params, callback)
   local input = string.sub(params.context.cursor_before_line, params.offset)
   local query_result = { self.query(input) }
   local reply_items = {}
-  vim.pretty_print(self.config)
 
   for i, query_item in pairs(query_result) do
     local uncode = string.sub(input, 1, #input - #query_item.code)
