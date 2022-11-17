@@ -58,7 +58,7 @@ end
 
 -- @return string
 function source:get_keyword_pattern()
-  return [[\<\l\+\d\?]]
+  return [[\l\+\d\?]]
 end
 
 -- Return trigger characters for triggering completion. (Optional)
