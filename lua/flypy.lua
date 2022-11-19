@@ -84,7 +84,7 @@ function source:complete(params, callback)
         end
         return label
       end)(),
-      word = string.format("%s%s", uncode, query_item.word),
+      -- word = string.format("%s%s", uncode, query_item.word),
       filterText = (function ()
         if self.config.num_filter then
           return string.format("%s%d", input, i)
@@ -94,7 +94,30 @@ function source:complete(params, callback)
       end)(),
       sortText = i,
       preselect = #uncode == 0,
-      -- commitCharacters = {i},
+      textEdit = {
+        range = {
+          start = {
+            line = params.context.cursor.line,
+            character = params.offset,
+          },
+          ['end'] = {
+            line = params.context.cursor.line,
+            character = params.context.cursor.col - 1,
+          },
+        },
+        insert = {
+        -- no utf-8
+          start = {
+            line = params.context.cursor.line,
+            character = params.context.cursor.character - (params.context.cursor.col - params.offset),
+          },
+          ['end'] = {
+            line = params.context.cursor.line,
+            character = params.context.cursor.character,
+          },
+        },
+        newText = string.format("%s%s", uncode, query_item.word),
+      }
     })
   end
   callback(reply_items)
