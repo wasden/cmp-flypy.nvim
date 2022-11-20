@@ -6,6 +6,9 @@ local defaults = {
   filetype = { "markdown", },  -- 在指定文件类型下开启
   num_filter = true, -- 数字筛选
   source_code = true,
+  space_select_enable = false, -- 空格上屏使能
+  space_select_enable_hint = "",
+  space_select_switch_mappings = "<C-Space>", -- 空格上屏开关按键映射
 }
 
 local config = {}
@@ -25,12 +28,65 @@ source.new = function()
   return self
 end
 
+function source.space_select_init()
+  if not config.space_select_enable then
+    return
+  end
+  config.space_select_on = true
+  local cmp = require "cmp"
+  cmp.setup {
+    mapping = {
+      ["<Space>"] = cmp.mapping(function(fallback)
+        if not config.space_select_on then
+          return fallback()
+        end
+        if cmp.visible() then
+          local selected_entry = cmp.core.view:get_selected_entry()
+          if selected_entry
+              and selected_entry.source.name == "flypy"
+              and not cmp.confirm({ select = true }) then
+            return fallback()
+          end
+        end
+        fallback()
+      end,
+        { "i", "s", }),
+      [config.space_select_switch_mappings] = cmp.mapping(function (fallback)
+        if not config.space_select_enable then
+          return fallback()
+        end
+        source.space_select_switch()
+        if config.space_select_on then
+          local selected_entry = cmp.core.view:get_selected_entry()
+          if selected_entry and selected_entry.source.name == "flypy" then
+            cmp.confirm({ select = true })
+          end
+        else
+          return fallback()
+        end
+      end)
+    },
+  }
+end
+
+function source.space_select_switch()
+  if not config.space_select_enable then
+    return
+  end
+  if config.space_select_on then
+    config.space_select_on = false
+  else
+    config.space_select_on = true
+  end
+end
+
 function source.setup(opts)
   if not opts then
     return
   end
   local new_config = vim.tbl_deep_extend('keep', opts, defaults)
   setmetatable(config, {__index = new_config})
+  source.space_select_init()
 end
 
 -- @return boolean
@@ -81,6 +137,9 @@ function source:complete(params, callback)
         end
         if self.config.num_filter then
           label = string.format("%s(%d)", label, i)
+        end
+        if self.config.space_select_enable_hint and self.config.space_select_on and #uncode == 0 then
+          label = string.format("%s %s", label, self.config.space_select_enable_hint)
         end
         return label
       end)(),

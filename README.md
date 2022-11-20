@@ -16,6 +16,7 @@ A chinese IM for neovim
 ## Installation
 ```lua
 -- packer
+-- 默认配置
 use {
   'wasden/cmp-flypy.nvim',
   run = "make",                    -- make flypy只编译小鹤音形， make wubi98只编译98五笔， make或make all全编译
@@ -27,6 +28,9 @@ use {
       filetype = { "markdown", },  -- 在指定文件类型下开启
       num_filter = true,           -- 数字筛选
       source_code = false,         -- 显示原码
+      space_select_enable = false, -- 空格上屏使能
+      space_select_enable_hint = "",             -- 提示可使用空格上屏
+      space_select_switch_mappings = "<C-Space>", -- 空格上屏开关按键映射
     })
   end
 }
@@ -37,19 +41,4 @@ require('cmp').setup({
     { name = 'flypy' },
   },
 })
- -- 预选中时空格上屏配置（nvim-cmp)
-["<Space>"] = cmp.mapping(function(fallback)
-  if cmp.visible() then
-    local selected_entry = cmp.core.view:get_selected_entry()
-    if selected_entry
-       and selected_entry.source.name == "flypy"
-       and not cmp.confirm({select=true}) then
-       return fallback()
-    end
-  end
-  fallback()
-end,
-{"i","s",}),
-
-
 ```
