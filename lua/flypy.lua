@@ -60,6 +60,8 @@ function source.space_select_init()
           local selected_entry = cmp.core.view:get_selected_entry()
           if selected_entry and selected_entry.source.name == "flypy" then
             cmp.confirm({ select = true })
+          else
+            return fallback()
           end
         else
           return fallback()
