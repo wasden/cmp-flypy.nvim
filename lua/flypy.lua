@@ -1,4 +1,5 @@
 local source = {}
+local config = {}
 
 local defaults = {
   dict_name = "flypy",
@@ -11,8 +12,6 @@ local defaults = {
   space_select_switch_mappings = "<C-Space>", -- 空格上屏开关按键映射
 }
 
-local config = {}
-
 local gen_lib_query = (function ()
   local this_dir = string.sub(debug.getinfo(1).source, 2, #"/flypy.lua" * -1)
   return function (dict_name)
@@ -21,17 +20,15 @@ local gen_lib_query = (function ()
   end
 end)()
 
-source.new = function()
-  local self = setmetatable({}, { __index = source })
-  self.config = config
-  setmetatable(config, {__index = defaults})
-  return self
+local function space_select_switch()
+  if config.space_select_on then
+    config.space_select_on = false
+  else
+    config.space_select_on = true
+  end
 end
 
-function source.space_select_init()
-  if not config.space_select_enable then
-    return
-  end
+local function space_select_init()
   config.space_select_on = true
   local cmp = require "cmp"
   cmp.setup {
@@ -50,36 +47,21 @@ function source.space_select_init()
         end
         fallback()
       end,
-        { "i", "s", }),
-      [config.space_select_switch_mappings] = cmp.mapping(function (fallback)
-        if not config.space_select_enable then
-          return fallback()
-        end
-        source.space_select_switch()
-        if config.space_select_on then
-          local selected_entry = cmp.core.view:get_selected_entry()
-          if selected_entry and selected_entry.source.name == "flypy" then
-            cmp.confirm({ select = true })
-          else
-            return fallback()
-          end
-        else
-          return fallback()
-        end
-      end)
+      { "i", "s", }),
+      [config.space_select_switch_mappings] = cmp.mapping(function(_)
+        space_select_switch()
+        vim.api.nvim_input("<Space>")
+      end,
+      { "i", "s", }),
     },
   }
 end
 
-function source.space_select_switch()
-  if not config.space_select_enable then
-    return
-  end
-  if config.space_select_on then
-    config.space_select_on = false
-  else
-    config.space_select_on = true
-  end
+source.new = function()
+  local self = setmetatable({}, { __index = source })
+  self.config = config
+  setmetatable(config, {__index = defaults})
+  return self
 end
 
 function source.setup(opts)
@@ -88,7 +70,9 @@ function source.setup(opts)
   end
   local new_config = vim.tbl_deep_extend('keep', opts, defaults)
   setmetatable(config, {__index = new_config})
-  source.space_select_init()
+  if config.space_select_enable then
+    space_select_init()
+  end
 end
 
 -- @return boolean
