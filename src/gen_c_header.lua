@@ -19,6 +19,13 @@ local TAIL =
 };
 ]]
 
+local function tbl_isempty(t)
+  if t == nil or next(t) == nil then
+    return true
+  end
+  return false
+end
+
 local function get_hash_by_bytes(...)
   local hash = 0
   for i, byte in ipairs(...) do
@@ -66,7 +73,7 @@ end
 
 local function find_new_hash(dict, hash_begin)
   for i = hash_begin + 1, DICT_HASH_MAX do
-    if dict[i] == nil then
+    if tbl_isempty(dict[i]) then
       dict[i] = {}
       return i
     end
@@ -78,8 +85,15 @@ end
 -- hash:[word] -> hash:word
 local function average_dict(unaverage_dict)
   local dict = {}
+  -- entry
   for hash_idx, item in pairs(unaverage_dict) do
-    dict[hash_idx] = item[1]
+    if not tbl_isempty(item) then
+      dict[hash_idx] = item[1]
+    end
+  end
+
+  -- list
+  for hash_idx, item in pairs(unaverage_dict) do
     local last_item = dict[hash_idx]
     for other_idx = 2, #item do
       local new_hash = find_new_hash(unaverage_dict, hash_idx)
@@ -87,7 +101,6 @@ local function average_dict(unaverage_dict)
       dict[new_hash] = item[other_idx]
       last_item = dict[new_hash]
       dict[new_hash].is_list = true
-      item[other_idx] = nil
     end
   end
   return dict
